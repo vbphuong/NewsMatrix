@@ -22,7 +22,7 @@ model = ChatOpenAI(
 
 def partition_document(file_path: str):
     """Extract elements from PDF using unstructured"""
-    print(f"📄 Partitioning document: {file_path}")
+    print(f"Partitioning document: {file_path}")
     
     elements = partition_pdf(
         filename=file_path,  # Path to your PDF file
@@ -32,12 +32,12 @@ def partition_document(file_path: str):
         extract_image_block_to_payload=True # Store images as base64 data you can actually use
     )
     
-    print(f"✅ Extracted {len(elements)} elements")
+    print(f"Extracted {len(elements)} elements")
     return elements
 
 def create_chunks_by_title(elements):
     """Create intelligent chunks using title-based strategy"""
-    print("🔨 Creating smart chunks...")
+    print("Creating smart chunks...")
     
     chunks = chunk_by_title(
         elements, # The parsed PDF elements from previous step
@@ -46,7 +46,7 @@ def create_chunks_by_title(elements):
         combine_text_under_n_chars=500 # Merge tiny chunks under 500 chars with neighbors
     )
     
-    print(f"✅ Created {len(chunks)} chunks")
+    print(f"Created {len(chunks)} chunks")
     return chunks
 
 def separate_content_types(chunk):
@@ -119,7 +119,7 @@ SEARCHABLE DESCRIPTION:"""
         return response.content
         
     except Exception as e:
-        print(f"     ❌ AI summary failed: {e}")
+        print(f"     AI summary failed: {e}")
         # Fallback to simple summary
         summary = f"{text[:300]}..."
         if tables:
@@ -130,7 +130,7 @@ SEARCHABLE DESCRIPTION:"""
 
 def summarise_chunks(chunks):
     """Process all chunks with AI Summaries"""
-    print("🧠 Processing chunks with AI Summaries...")
+    print("Processing chunks with AI Summaries...")
     
     langchain_documents = []
     total_chunks = len(chunks)
@@ -158,7 +158,7 @@ def summarise_chunks(chunks):
                 print(f"     → AI summary created successfully")
                 print(f"     → Enhanced content preview: {enhanced_content[:200]}...")
             except Exception as e:
-                print(f"     ❌ AI summary failed: {e}")
+                print(f"     AI summary failed: {e}")
                 enhanced_content = content_data['text']
         else:
             print(f"     → Using raw text (no tables/images)")
@@ -178,7 +178,7 @@ def summarise_chunks(chunks):
         
         langchain_documents.append(doc)
     
-    print(f"✅ Processed {len(langchain_documents)} chunks")
+    print(f"Processed {len(langchain_documents)} chunks")
     return langchain_documents
 
 def export_chunks_to_json(chunks, filename="chunks_export.json"):
@@ -199,7 +199,7 @@ def export_chunks_to_json(chunks, filename="chunks_export.json"):
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(export_data, f, indent=2, ensure_ascii=False)
     
-    print(f"✅ Exported {len(export_data)} chunks to {filename}")
+    print(f"Exported {len(export_data)} chunks to {filename}")
     return export_data
 
 def create_vector_store(documents, persist_directory="dbv1/chroma_db"):
@@ -216,7 +216,7 @@ def create_vector_store(documents, persist_directory="dbv1/chroma_db"):
     )
     print("--- Finished creating vector store ---")
     
-    print(f"✅ Vector store created and saved to {persist_directory}")
+    print(f"Vector store created and saved to {persist_directory}")
     return vectorstore
 
 def run_complete_ingestion_pipeline(pdf_path: str):
@@ -236,5 +236,5 @@ def run_complete_ingestion_pipeline(pdf_path: str):
     # Step 4: Vector Store
     db = create_vector_store(summarised_chunks, persist_directory="dbv2/chroma_db")
     
-    print("🎉 Pipeline completed successfully!")
+    print("Pipeline completed successfully!")
     return db
