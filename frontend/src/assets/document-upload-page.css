@@ -1,0 +1,135 @@
+.document-upload-page {
+  padding-bottom: 3rem;
+}
+
+.document-upload-hero {
+  position: relative;
+}
+
+.document-upload-hero::after {
+  content: '';
+  position: absolute;
+  inset: auto 8% -1.5rem auto;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 200, 66, 0.16), transparent 72%);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.document-upload-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.document-upload-panel,
+.document-history-panel {
+  min-height: 100%;
+}
+
+.document-upload-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.document-dropzone {
+  border: 1px dashed rgba(245, 200, 66, 0.28);
+  background:
+    linear-gradient(180deg, rgba(18, 18, 26, 0.98), rgba(13, 13, 20, 0.98)),
+    rgba(18, 18, 26, 0.8);
+  border-radius: 1.2rem;
+  padding: 1rem;
+  transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.document-dropzone--filled {
+  border-color: rgba(245, 200, 66, 0.55);
+  background: linear-gradient(180deg, rgba(26, 26, 38, 0.98), rgba(13, 13, 20, 0.98));
+}
+
+.document-dropzone__label {
+  display: grid;
+  gap: 0.4rem;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.document-dropzone__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.document-dropzone__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.document-dropzone__copy {
+  color: var(--text-2);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.document-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.document-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.document-item {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(46, 46, 66, 0.92);
+  background: rgba(15, 15, 22, 0.92);
+  min-width: 0; 
+  overflow: hidden;  
+}
+
+.document-item__title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.document-item__meta,
+.document-item__path,
+.document-item__date {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+
+.document-item__path {
+  word-break: break-all;
+}
+
+@media (max-width: 960px) {
+  .document-upload-grid {
+    grid-template-columns: 1fr;
+  }
+}

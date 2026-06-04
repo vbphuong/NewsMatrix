@@ -1,0 +1,49 @@
+.category-page {
+  max-width: 1100px;
+}
+
+.category-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.category-panel {
+  grid-column: 1 / -1;
+}
+
+.category-form {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.category-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.category-list {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.category-card {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: rgba(18, 18, 26, 0.9);
+  padding: 0.95rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.category-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}

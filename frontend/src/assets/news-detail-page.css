@@ -1,0 +1,134 @@
+.news-detail-page {
+  max-width: 1100px;
+  display: grid;
+  gap: 1rem;
+}
+
+.news-detail-card,
+.news-comment-panel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.news-detail-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+}
+
+.news-detail-content {
+  margin: 0;
+  line-height: 1.75;
+  color: var(--text-2);
+}
+
+.news-detail-stats,
+.news-detail-categories,
+.news-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.news-detail-category-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 200, 66, 0.25);
+  background: rgba(245, 200, 66, 0.08);
+  color: var(--gold);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.3rem 0.55rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 0.8rem;
+  border: 1px solid var(--border);
+  background: var(--ink-3);
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.icon-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.icon-btn--active {
+  background: linear-gradient(180deg, rgba(245,200,66,0.12), rgba(245,200,66,0.06));
+  color: var(--gold);
+  border-color: rgba(245,200,66,0.22);
+}
+
+/* Tooltip styles for icon buttons */
+.icon-btn {
+  position: relative;
+}
+
+.icon-btn .tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: rgba(20, 20, 20, 0.95);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 20;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+.icon-btn .tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: rgba(20,20,20,0.95) transparent transparent transparent;
+}
+
+.icon-btn:hover .tooltip,
+.icon-btn:focus .tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.news-comment-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.news-comment-item {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 0.8rem 0.95rem;
+  background: rgba(18, 18, 26, 0.9);
+}
+
+.news-comment-item p {
+  margin: 0.5rem 0 0;
+  color: var(--text-2);
+}
+
+.news-comment-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
