@@ -204,7 +204,7 @@ def export_chunks_to_json(chunks, filename="chunks_export.json"):
 
 def create_vector_store(documents, persist_directory="dbv1/chroma_db"):
     """Create and persist ChromaDB vector store"""
-    print("🔮 Creating embeddings and storing in ChromaDB...")
+    print("Creating embeddings and storing in ChromaDB...")
     
     # Create ChromaDB vector store
     print("--- Creating vector store ---")
@@ -221,7 +221,7 @@ def create_vector_store(documents, persist_directory="dbv1/chroma_db"):
 
 def run_complete_ingestion_pipeline(pdf_path: str):
     """Run the complete RAG ingestion pipeline"""
-    print("🚀 Starting RAG Ingestion Pipeline")
+    print("Starting RAG Ingestion Pipeline")
     print("=" * 50)
     
     # Step 1: Partition
