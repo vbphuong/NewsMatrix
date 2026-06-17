@@ -8,7 +8,6 @@ import os
 # LangChain components
 from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_chroma import Chroma
 from dotenv import load_dotenv
 
 load_dotenv()
