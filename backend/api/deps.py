@@ -6,8 +6,8 @@ from passlib.context import CryptContext
 from jose import jwt, JWTError
 from dotenv import load_dotenv
 import os 
-from database import SessionLocal
-from models import User
+from api.database import SessionLocal
+from api.models import User
 
 load_dotenv()
 

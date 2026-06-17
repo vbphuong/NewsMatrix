@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
-from models import Chunk, Document
-from multi_model_chunk import create_chunks_by_title, embedding_model, partition_document, summarise_chunks
+from api.models import Chunk, Document
+from api.multi_model_chunk import create_chunks_by_title, embedding_model, partition_document, summarise_chunks
 
 load_dotenv()
 

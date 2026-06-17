@@ -4,9 +4,9 @@ from typing import Optional
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
-from deps import db_dependency, user_dependency
-from models import Document
-from services.document_ingestion import ingest_pdf_document, list_documents
+from api.deps import db_dependency, user_dependency
+from api.models import Document
+from api.services.document_ingestion import ingest_pdf_document, list_documents
 
 router = APIRouter(
     prefix="/documents",

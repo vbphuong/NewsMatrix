@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import func
 
-from deps import db_dependency, user_dependency
-from models import Category
+from api.deps import db_dependency, user_dependency
+from api.models import Category
 
 router = APIRouter(
     prefix="/categories",

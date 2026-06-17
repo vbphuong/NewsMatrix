@@ -6,9 +6,9 @@ import time
 
 from dotenv import load_dotenv
 
-from database import SessionLocal
-from models import News
-from services.scalability import (
+from api.database import SessionLocal
+from api.models import News
+from api.services.scalability import (
     RABBITMQ_QUEUE_NAME,
     apply_interaction_event,
     cache_get_json,

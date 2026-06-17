@@ -6,9 +6,9 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
-from deps import db_dependency, user_dependency
-from models import Category, Comment, Follow, Like, News, Organization, User
-from services.scalability import (
+from api.deps import db_dependency, user_dependency
+from api.models import Category, Comment, Follow, Like, News, Organization, User
+from api.services.scalability import (
     cache_append_comment,
     cache_get_int,
     cache_get_json,

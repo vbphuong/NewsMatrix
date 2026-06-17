@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import joinedload
 
-from deps import bcrypt_context, db_dependency, user_dependency
-from models import Role, User
+from api.deps import bcrypt_context, db_dependency, user_dependency
+from api.models import Role, User
 
 router = APIRouter(
     prefix="/people",

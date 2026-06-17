@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from deps import user_dependency
-from generate_answer import answer_query
+from api.deps import user_dependency
+from api.generate_answer import answer_query
 
 router = APIRouter(
     prefix="/assistant",

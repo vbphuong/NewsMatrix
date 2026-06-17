@@ -10,8 +10,8 @@ from typing import Any, Optional
 
 from dotenv import load_dotenv
 
-from database import SessionLocal
-from models import Comment, Follow, Like, News, Organization
+from api.database import SessionLocal
+from api.models import Comment, Follow, Like, News, Organization
 
 load_dotenv(override=True)
 

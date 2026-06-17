@@ -11,8 +11,8 @@ from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from pydantic import BaseModel
 
-from database import SessionLocal
-from models import Chunk, Document as DocumentRecord
+from api.database import SessionLocal
+from api.models import Chunk, Document as DocumentRecord
 
 load_dotenv()
 
