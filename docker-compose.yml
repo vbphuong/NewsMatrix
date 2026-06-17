@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: newsmatrix-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: newsmatrix-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: always
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newsmatrix-backend-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - rabbitmq
+    restart: always
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newsmatrix-backend-worker
+    command: python -m api.worker
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - rabbitmq
+      - backend
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: newsmatrix-frontend
+    ports:
+      - "80:80"
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  redis_data:
+  rabbitmq_data:

@@ -9,12 +9,15 @@ import os
 from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_chroma import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from dotenv import load_dotenv
 
 load_dotenv()
 
 openai_key = os.getenv("OPENAI_API_KEY")
-embedding_model = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=openai_key)
+embedding_model = HuggingFaceEmbeddings(
+    model_name="all-MiniLM-L6-v2"
+)
 model = ChatOpenAI(
     model="gpt-4o-mini",
     openai_api_key=openai_key
@@ -240,4 +243,4 @@ def run_complete_ingestion_pipeline(pdf_path: str):
     return db
 
 # Run the complete pipeline
-db = run_complete_ingestion_pipeline("./docs/attention-is-all-you-need.pdf")
+db = run_complete_ingestion_pipeline("./docs/temp.pdf")

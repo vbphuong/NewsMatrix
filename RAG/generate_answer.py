@@ -9,13 +9,16 @@ from typing import Sequence
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from pydantic import BaseModel
 
 load_dotenv()
 
 openai_key = os.getenv("OPENAI_API_KEY")
-embedding_model = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=openai_key)
+embedding_model = HuggingFaceEmbeddings(
+    model_name="all-MiniLM-L6-v2"
+)
 model = ChatOpenAI(
     model="gpt-4o-mini",
     openai_api_key=openai_key
@@ -320,7 +323,9 @@ documents = load_documents_from_store()
 retriever = HybridMultiQueryRetriever(documents)
 
 # Query the vector store
-query = "Give me some illustration or image about the attention mechanism."
+# query = "What's the Revenue by Reportable Segments in Compute & Networking for Jan 28, 2024?"
+# query = "How much money did RSUs, PSUs and Market-based PSUs related to Weighted average grant-date fair value per share in Jan 30, 2022?"
+query = "When is the time that Revenue by Reportable Segments in Compute & Networking reached 15,068 million USD?"
 
 fused_results, query_variations = retriever.search_multi_query(
     query=query,
