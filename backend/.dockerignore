@@ -11,5 +11,3 @@ __pycache__
 dbv2/chroma_db
 *.db
 *.sqlite3
-Dockerfile
-docker-compose.yml
