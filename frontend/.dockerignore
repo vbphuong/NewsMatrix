@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.env.local
+.vscode
+.git
+.github
+.gitignore
+.DS_Store
+Dockerfile
+nginx.conf
