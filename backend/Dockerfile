@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Cài đặt các package hệ thống cho Unstructured PDF parsing
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     poppler-utils \
     tesseract-ocr \
