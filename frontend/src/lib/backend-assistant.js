@@ -10,12 +10,11 @@ function parseError(error) {
   return 'Request failed';
 }
 
-async function request(path, options = {}) {
+async function requestFormData(path, options = {}) {
   const response = await fetch(`${backendBaseUrl}${path}`, {
     ...options,
     headers: {
       Authorization: authState.token ? `Bearer ${authState.token}` : '',
-      'Content-Type': 'application/json',
       ...(options.headers ?? {}),
     },
   });
@@ -30,11 +29,16 @@ async function request(path, options = {}) {
   return payload;
 }
 
-export async function chatWithAssistant(message) {
+export async function chatWithAssistant(message, imageFile = null) {
   try {
-    return await request('/assistant/chat', {
+    const formData = new FormData();
+    formData.append('message', message);
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+    return await requestFormData('/assistant/chat', {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: formData,
     });
   } catch (error) {
     throw new Error(parseError(error));

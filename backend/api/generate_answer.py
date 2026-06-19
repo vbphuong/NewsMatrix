@@ -8,6 +8,7 @@ from typing import Sequence
 
 from dotenv import load_dotenv
 from langchain_core.documents import Document
+from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from pydantic import BaseModel
 
@@ -392,7 +393,7 @@ def chunks_have_media(chunks: Sequence[Document]) -> bool:
     return False
 
 
-def generate_final_answer(chunks, query):
+def generate_final_answer(chunks, query, image_base64: str | None = None, image_content_type: str = "image/jpeg"):
     """Generate final answer using multimodal content"""
     
     try:
@@ -442,14 +443,28 @@ CONTENT TO ANALYZE:
 
 ANSWER:"""
 
-        response = llm.invoke(prompt_text)
+        if image_base64:
+            message = HumanMessage(content=[
+                {"type": "text", "text": prompt_text},
+                {"type": "image_url", "image_url": {
+                    "url": f"data:{image_content_type};base64,{image_base64}"
+                }},
+            ])
+            response = llm.invoke([message])
+        else:
+            response = llm.invoke(prompt_text)
         return response.content
         
     except Exception as e:
         print(f"❌ Answer generation failed: {e}")
         return "Sorry, I encountered an error while generating the answer."
 
-def answer_query(query: str, max_results: int = 5) -> dict:
+def answer_query(
+    query: str,
+    max_results: int = 5,
+    image_base64: str | None = None,
+    image_content_type: str = "image/jpeg",
+) -> dict:
     indexed_chunks = load_chunks_from_database()
     retriever = HybridMultiQueryRetriever(indexed_chunks)
     fused_results, query_variations = retriever.search_multi_query(
@@ -463,7 +478,7 @@ def answer_query(query: str, max_results: int = 5) -> dict:
     )
 
     chunks = [result.document for result in fused_results[:max_results]]
-    answer = generate_final_answer(chunks, query)
+    answer = generate_final_answer(chunks, query, image_base64=image_base64, image_content_type=image_content_type)
 
     return {
         "query": query,
