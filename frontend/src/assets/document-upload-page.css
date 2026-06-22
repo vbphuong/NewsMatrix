@@ -93,6 +93,29 @@
 .document-list {
   display: grid;
   gap: 0.85rem;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+/* Custom premium scrollbar for document list */
+.document-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.document-list::-webkit-scrollbar-track {
+  background: rgba(46, 46, 66, 0.2);
+  border-radius: 3px;
+}
+
+.document-list::-webkit-scrollbar-thumb {
+  background: rgba(245, 200, 66, 0.3);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.document-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 200, 66, 0.5);
 }
 
 .document-item {

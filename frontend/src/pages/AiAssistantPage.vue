@@ -141,6 +141,28 @@ function useSuggestion(suggestion) {
   prompt.value = suggestion;
 }
 
+function formatMessageContent(content) {
+  if (!content) return '';
+  // Escape HTML to prevent XSS issues
+  let escaped = content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  // Replace double asterisks **text** with <strong>text</strong>
+  escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // Replace single asterisks *text* with <em>text</em>
+  escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  // Convert inline code `code` to <code class="chat-inline-code">code</code>
+  escaped = escaped.replace(/`(.*?)`/g, '<code class="chat-inline-code">$1</code>');
+
+  return escaped;
+}
+
 onMounted(() => {
   void scrollTranscriptToBottom();
 });
@@ -174,7 +196,7 @@ onMounted(() => {
               <span class="assistant-message__role">{{ message.role === 'user' ? 'You' : 'Assistant' }}</span>
               <div class="assistant-message__text">
                 <img v-if="message.imageUrl" :src="message.imageUrl" class="assistant-message__image" alt="Uploaded image" />
-                {{ message.content }}
+                <span v-html="formatMessageContent(message.content)"></span>
               </div>
             </article>
           </template>
