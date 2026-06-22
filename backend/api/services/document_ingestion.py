@@ -190,3 +190,42 @@ def list_documents(db: Session, limit: int = 100) -> list[Document]:
         .limit(limit)
         .all()
     )
+
+
+def delete_pdf_from_supabase_storage(object_path: str) -> None:
+    """Delete a document PDF file from Supabase Storage."""
+    try:
+        supabase_url, service_role_key = require_storage_config()
+        encoded_object_path = urllib.parse.quote(object_path, safe="/-_.~")
+        request_url = f"{supabase_url}/storage/v1/object/{RAW_DATA_BUCKET}/{encoded_object_path}"
+
+        request = urllib.request.Request(
+            request_url,
+            method="DELETE",
+        )
+        request.add_header("Authorization", f"Bearer {service_role_key}")
+        request.add_header("apikey", service_role_key)
+
+        with urllib.request.urlopen(request, timeout=30) as response:
+            response.read()
+    except Exception as error:
+        # We log the warning but don't fail the database transaction if the file is already gone
+        print(f"Warning: Failed to delete file {object_path} from Supabase storage: {error}")
+
+
+def delete_pdf_document(db: Session, document_id: int) -> None:
+    """Delete a document record from PostgreSQL DB and its corresponding PDF from Supabase Storage."""
+    document = db.query(Document).filter(Document.document_id == document_id).first()
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        )
+
+    # Delete the PDF file from Supabase Storage
+    if document.file_path:
+        delete_pdf_from_supabase_storage(document.file_path)
+
+    # Delete the document record from DB (associated chunks will be cascade-deleted by database foreign key constraint)
+    db.delete(document)
+    db.commit()

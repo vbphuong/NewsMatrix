@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from api.deps import db_dependency, user_dependency
 from api.models import Document
-from api.services.document_ingestion import ingest_pdf_document, list_documents
+from api.services.document_ingestion import ingest_pdf_document, list_documents, delete_pdf_document
 
 router = APIRouter(
     prefix="/documents",
@@ -62,3 +62,10 @@ async def upload_document(current_user: user_dependency, db: db_dependency, file
     document = ingest_pdf_document(db, file)
     response = serialize_document(document)
     return DocumentUploadResponse(message="Document uploaded and processed successfully.", **response.model_dump())
+
+
+@router.delete("/{document_id}", status_code=status.HTTP_200_OK)
+async def delete_document(document_id: int, current_user: user_dependency, db: db_dependency):
+    require_admin(current_user)
+    delete_pdf_document(db, document_id)
+    return {"message": "Document and all its chunks have been successfully deleted."}

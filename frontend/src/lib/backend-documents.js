@@ -62,3 +62,13 @@ export async function uploadDocument(file) {
     throw new Error(parseError(error));
   }
 }
+
+export async function deleteDocument(documentId) {
+  try {
+    return await request(`/documents/${documentId}`, {
+      method: 'DELETE',
+    });
+  } catch (error) {
+    throw new Error(parseError(error));
+  }
+}

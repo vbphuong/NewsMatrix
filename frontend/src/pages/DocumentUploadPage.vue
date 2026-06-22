@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 
-import { fetchDocuments, uploadDocument } from '../lib/backend-documents';
+import { fetchDocuments, uploadDocument, deleteDocument } from '../lib/backend-documents';
 import '../assets/document-upload-page.css';
 
 const documents = ref([]);
@@ -47,6 +47,26 @@ async function handleUpload() {
     await loadDocuments();
   } catch (uploadError) {
     error.value = uploadError instanceof Error ? uploadError.message : 'Failed to upload document';
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function handleDelete(documentId, fileName) {
+  if (!window.confirm(`Are you sure you want to delete "${fileName}" and all of its chunks? This action cannot be undone.`)) {
+    return;
+  }
+
+  loading.value = true;
+  error.value = '';
+  success.value = '';
+
+  try {
+    const res = await deleteDocument(documentId);
+    success.value = res.message || 'Document deleted successfully.';
+    await loadDocuments();
+  } catch (deleteError) {
+    error.value = deleteError instanceof Error ? deleteError.message : 'Failed to delete document';
   } finally {
     loading.value = false;
   }
@@ -105,14 +125,24 @@ onMounted(() => {
 
         <div class="document-list">
           <article v-for="document in documents" :key="document.document_id" class="document-item">
-            <div>
-              <h3 class="document-item__title">{{ document.file_name }}</h3>
+            <div class="document-item__details">
+              <h3 class="document-item__title" :title="document.file_name">{{ document.file_name }}</h3>
               <p class="document-item__meta">
                 {{ document.total_page }} pages | {{ document.total_chunk }} chunks | {{ document.file_type }}
               </p>
               <p class="document-item__path">{{ document.file_path }}</p>
+              <time v-if="document.created_at" class="document-item__date">{{ new Date(document.created_at).toLocaleString() }}</time>
             </div>
-            <time v-if="document.created_at" class="document-item__date">{{ new Date(document.created_at).toLocaleString() }}</time>
+            <div class="document-item__actions">
+              <button
+                class="btn btn--danger btn--small"
+                type="button"
+                :disabled="loading"
+                @click="handleDelete(document.document_id, document.file_name)"
+              >
+                Delete
+              </button>
+            </div>
           </article>
         </div>
       </article>

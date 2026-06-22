@@ -3,35 +3,35 @@ import uuid
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# Cấu hình API Backend URL
+# Configure API Backend URL
 BASE_URL = "http://localhost:8000"
-NUM_REQUESTS = 100  # Giảm xuống 50 requests để tránh nghẽn luồng đơn FastAPI
-CONCURRENCY = 10   # Giảm độ song song để luồng đơn FastAPI xử lý kịp
-TIMEOUT_SECONDS = 30  # Tăng thời gian chờ lên 30 giây để tránh timeout
+NUM_REQUESTS = 100  # Number of requests to run
+CONCURRENCY = 10   # Thread pool limit for concurrent execution
+TIMEOUT_SECONDS = 30  # Request timeout threshold in seconds
 
 def run_stress_test():
     print("=" * 60)
-    print(" BẮT ĐẦU CHẠY THỬ NGHIỆM GỬI COMMENT ĐỒNG THỜI (ĐÃ TỐI ƯU CẤU HÌNH)")
+    print(" STARTING CONCURRENT COMMENT STRESS TEST (OPTIMIZED CONFIGURATION)")
     print("=" * 60)
 
-    # Bước 1: Tạo tài khoản test tự động
+    # Step 1: Create a test user account
     email = f"stress_user_{uuid.uuid4().hex[:6]}@example.com"
     password = "password123"
-    print(f"[*] Đang đăng ký tài khoản thử nghiệm: {email}...")
+    print(f"[*] Registering test account: {email}...")
     try:
         register_resp = requests.post(f"{BASE_URL}/auth/", json={"email": email, "password": password})
         register_resp.raise_for_status()
         token_data = register_resp.json()
         token = token_data["access_token"]
-        print("[+] Đăng ký tài khoản thành công.")
+        print("[+] Test account registered successfully.")
     except Exception as e:
-        print(f"[-] Đăng ký thất bại. Kiểm tra xem backend đã chạy chưa: {e}")
+        print(f"[-] Registration failed. Check if the backend is running: {e}")
         return
 
     headers = {"Authorization": f"Bearer {token}"}
 
-    # Bước 2: Tìm một bài viết
-    print("[*] Đang tìm bài viết để comment...")
+    # Step 2: Fetch an article to comment on
+    print("[*] Finding a published article to comment on...")
     try:
         news_resp = requests.get(f"{BASE_URL}/news", headers=headers)
         news_resp.raise_for_status()
@@ -39,17 +39,17 @@ def run_stress_test():
         
         published_news = [n for n in news_list if n.get("status", "").lower() == "published"]
         if not published_news:
-            print("[-] Không tìm thấy bài viết nào 'Published'.")
+            print("[-] No 'Published' articles found.")
             return
         
         news_id = published_news[0]["news_id"]
         title = published_news[0]["title"]
-        print(f"[+] Tìm thấy bài viết: ID {news_id} - '{title[:30]}...'")
+        print(f"[+] Found article: ID {news_id} - '{title[:30]}...'")
     except Exception as e:
-        print(f"[-] Không lấy được danh sách bài viết: {e}")
+        print(f"[-] Failed to fetch articles list: {e}")
         return
 
-    # Bước 3: Hàm gửi comment
+    # Step 3: Function to send a single comment request
     def send_single_comment(index):
         start_time = time.time()
         payload = {"content": f"Stress test comment #{index} - {uuid.uuid4().hex[:4]}"}
@@ -71,8 +71,8 @@ def run_stress_test():
             elapsed = time.time() - start_time
             return False, elapsed, None, str(err)
 
-    # Bước 4: Thực hiện gửi đồng thời
-    print(f"[*] Đang gửi {NUM_REQUESTS} comments (độ song song: {CONCURRENCY}, timeout: {TIMEOUT_SECONDS}s)...")
+    # Step 4: Perform concurrent requests
+    print(f"[*] Sending {NUM_REQUESTS} comments (concurrency: {CONCURRENCY}, timeout: {TIMEOUT_SECONDS}s)...")
     start_total = time.time()
     
     results = []
@@ -83,7 +83,7 @@ def run_stress_test():
             
     total_duration = time.time() - start_total
 
-    # Bước 5: Phân tích kết quả
+    # Step 5: Analyze stress test results
     success_count = 0
     failure_count = 0
     total_latency = 0.0
@@ -106,28 +106,28 @@ def run_stress_test():
             errors[err] = errors.get(err, 0) + 1
 
     print("\n" + "=" * 60)
-    print(" KẾT QUẢ THỬ NGHIỆM")
+    print(" STRESS TEST RESULTS")
     print("=" * 60)
-    print(f"- Tổng thời gian hoàn thành: {total_duration:.3f} giây")
+    print(f"- Total duration: {total_duration:.3f} seconds")
     if success_count > 0:
-        print(f"- Thời gian phản hồi trung bình mỗi request: {(total_latency / success_count) * 1000:.1f} mili-giây")
-    print(f"- Số request Thành Công (201 Created): {success_count}/{NUM_REQUESTS}")
-    print(f"- Số request Thất Bại: {failure_count}/{NUM_REQUESTS}")
+        print(f"- Average response latency per request: {(total_latency / success_count) * 1000:.1f} milliseconds")
+    print(f"- Successful requests (201 Created): {success_count}/{NUM_REQUESTS}")
+    print(f"- Failed requests: {failure_count}/{NUM_REQUESTS}")
     
     if success_count > 0:
-        print(f"- Số ID âm (Xử lý qua RabbitMQ Async): {negative_ids}")
-        print(f"- Số ID dương (Ghi trực tiếp vào DB Sync): {positive_ids}")
+        print(f"- Negative IDs (Processed via RabbitMQ Async): {negative_ids}")
+        print(f"- Positive IDs (Written directly to DB Sync): {positive_ids}")
 
     if failure_count > 0:
-        print("\nCác lỗi gặp phải:")
+        print("\nEncountered errors:")
         for err_msg, count in errors.items():
-            print(f"  + [{count} lần] {err_msg}")
+            print(f"  + [{count} times] {err_msg}")
     
-    print("\n[GỢI Ý QUAN SÁT]:")
+    print("\n[OBSERVATION HINT]:")
     if negative_ids > 0:
-        print("  -> Hệ thống đang chạy qua RabbitMQ: phản hồi cực nhanh, ID trả về là số âm tạm thời.")
+        print("  -> The system is routing requests via RabbitMQ: lightning fast response, returned temporary negative IDs.")
     else:
-        print("  -> Hệ thống đang KHÔNG CÓ RabbitMQ (fallback ghi trực tiếp DB).")
+        print("  -> RabbitMQ is not active (falling back to direct DB sync write).")
     print("=" * 60)
 
 if __name__ == "__main__":

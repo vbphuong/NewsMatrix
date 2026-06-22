@@ -1,48 +1,48 @@
 ## External Configuration
 
-Redis và RabbitMQ không nằm trong source code của project. Đây là 2 service bên ngoài mà backend sẽ kết nối tới qua biến môi trường.
+Redis and RabbitMQ are not included in the project's source code directly. These are two external services that the backend connects to via environment variables.
 
 ### 1) Redis
 
-Bạn có thể chạy Redis bằng Docker, cài trực tiếp trên máy, hoặc dùng dịch vụ cloud.
+You can run Redis using Docker, install it directly on your machine, or use a cloud service.
 
-Chạy bằng Docker:
+Run using Docker:
 
 ```bash
-docker run --name newsmatrix-redis -p 6379:6379 redis:7-alpine
+docker run --name newsmatrix-redis -p 6379:6379 -d redis:7-alpine
 ```
 
-Khuyến nghị cho production:
+Recommendation for production:
 
 ```conf
 maxmemory 512mb
 maxmemory-policy allkeys-lru
 ```
 
-Mục đích của `allkeys-lru` là giữ các key hot trong RAM lâu hơn và tự đẩy key ít dùng ra trước.
+The purpose of `allkeys-lru` is to keep hot keys in RAM longer and automatically evict least recently used keys first.
 
 ### 2) RabbitMQ
 
-Chạy bằng Docker:
+Run using Docker:
 
 ```bash
-docker run --name newsmatrix-rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+docker run --name newsmatrix-rabbitmq -p 5672:5672 -p 15672:15672 -d rabbitmq:3-management
 ```
 
-RabbitMQ Management UI sẽ ở:
+The RabbitMQ Management UI will be available at:
 
 ```text
 http://localhost:15672
 ```
 
-Tài khoản mặc định của Docker image:
+Default credentials of the Docker image:
 
 - Username: `guest`
 - Password: `guest`
 
 ### 3) Backend `.env`
 
-Thêm các biến sau vào `backend/.env`:
+Add the following variables to `backend/.env`:
 
 ```env
 REDIS_URL=redis://localhost:6379/0
@@ -52,31 +52,31 @@ CACHE_TTL_SECONDS=120
 COMMENT_CACHE_TTL_SECONDS=300
 ```
 
-### 4) Cách kiểm tra kết nối
+### 4) How to Verify Connection
 
-Sau khi bật Redis và RabbitMQ, backend sẽ:
+Once Redis and RabbitMQ are running, the backend will:
 
-- cache `like_count`, `comment_count`, `followers_count`
-- cache danh sách `liked_news_ids` và `followed_organization_ids`
-- đẩy `like`, `comment`, `follow` sang RabbitMQ nếu queue có sẵn
+- Cache `like_count`, `comment_count`, and `followers_count`.
+- Cache the lists of `liked_news_ids` and `followed_organization_ids`.
+- Publish `like`, `comment`, and `follow` events to RabbitMQ if the queue is available.
 
-Nếu Redis hoặc RabbitMQ chưa chạy, backend vẫn có fallback sync để project không bị lỗi.
+If Redis or RabbitMQ is not running, the backend automatically falls back to synchronous processing so that the project runs locally without issues.
 
-### 5) Lưu ý quan trọng
+### 5) Important Notes
 
-Bạn không cần tạo thêm folder `redis` hay `rabbitmq` trong source code.
+You do not need to create any `redis` or `rabbitmq` folders in the source code.
 
-Nếu muốn tách môi trường rõ ràng hơn, cách đúng là:
+To cleanly separate environments, the correct approach is:
 
-1. Dùng Docker hoặc dịch vụ cloud cho Redis/RabbitMQ.
-2. Giữ chúng tách biệt khỏi backend và frontend.
-3. Chỉ cấu hình URL trong `.env`.
+1. Use Docker or cloud services for Redis/RabbitMQ.
+2. Keep them isolated from the backend and frontend.
+3. Only configure the connection URLs in the `.env` file.
 
-### 6) Trạng thái tối thiểu để chạy
+### 6) Minimum Checklist to Run the Application
 
-1. PostgreSQL đang chạy.
-2. Redis đang chạy.
-3. RabbitMQ đang chạy.
-4. `backend/.env` đã trỏ đúng URL.
-5. Chạy backend API.
-6. Chạy worker riêng bằng `python -m api.worker`.
+1. PostgreSQL is running.
+2. Redis is running.
+3. RabbitMQ is running.
+4. `backend/.env` points to the correct connection URLs.
+5. Run the backend API.
+6. Run the separate worker using `python -m api.worker`.
