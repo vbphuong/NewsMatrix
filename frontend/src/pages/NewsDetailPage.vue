@@ -26,6 +26,9 @@ const submittingComment = ref(false);
 const error = ref('');
 const success = ref('');
 
+const currentPage = ref(1);
+const commentsPerPage = 5;
+
 const likedNewsIds = ref(new Set());
 const followedOrganizationIds = ref(new Set());
 
@@ -41,6 +44,28 @@ const isFollowingOrganization = computed(() => {
     return false;
   }
   return followedOrganizationIds.value.has(news.value.organization_id);
+});
+
+const totalPages = computed(() => Math.ceil(comments.value.length / commentsPerPage));
+
+const paginatedComments = computed(() => {
+  const start = (currentPage.value - 1) * commentsPerPage;
+  const end = start + commentsPerPage;
+  return comments.value.slice(start, end);
+});
+
+const displayedPages = computed(() => {
+  const range = [];
+  const maxVisible = 5;
+  let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2));
+  let end = Math.min(totalPages.value, start + maxVisible - 1);
+  if (end - start + 1 < maxVisible) {
+    start = Math.max(1, end - maxVisible + 1);
+  }
+  for (let i = start; i <= end; i++) {
+    range.push(i);
+  }
+  return range;
 });
 
 function requireAuth() {
@@ -66,6 +91,7 @@ async function loadInteractionsIfAuthenticated() {
 async function loadNewsDetail() {
   loading.value = true;
   error.value = '';
+  currentPage.value = 1;
 
   try {
     news.value = await fetchNewsDetail(newsId.value);
@@ -156,6 +182,7 @@ async function submitComment() {
       news.value.comment_count = comments.value.length;
     }
     success.value = 'Comment added successfully.';
+    currentPage.value = totalPages.value;
   } catch (submitError) {
     error.value = submitError instanceof Error ? submitError.message : 'Failed to add comment';
   } finally {
@@ -257,7 +284,7 @@ onMounted(() => {
       </form>
 
       <div class="news-comment-list">
-        <article v-for="comment in comments" :key="comment.comment_id" class="news-comment-item">
+        <article v-for="comment in paginatedComments" :key="comment.comment_id" class="news-comment-item">
           <div class="news-comment-head">
             <strong>{{ comment.user_email }}</strong>
             <span>{{ comment.created_at ? new Date(comment.created_at).toLocaleString() : '' }}</span>
@@ -265,6 +292,76 @@ onMounted(() => {
           <p>{{ comment.content }}</p>
         </article>
         <p v-if="!comments.length" class="panel__meta">No comments yet.</p>
+      </div>
+
+      <div v-if="totalPages > 1" class="comments-pagination">
+        <div class="pagination-info">
+          Page {{ currentPage }} of {{ totalPages }}
+        </div>
+
+        <div class="pagination-controls">
+          <button
+            class="btn--pagination-arrow"
+            :disabled="currentPage === 1"
+            @click="currentPage = 1"
+            aria-label="First page"
+            title="First page"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="arrow-icon">
+              <polyline points="11 17 6 12 11 7"></polyline>
+              <polyline points="18 17 13 12 18 7"></polyline>
+            </svg>
+          </button>
+
+          <button
+            class="btn--pagination-arrow"
+            :disabled="currentPage === 1"
+            @click="currentPage--"
+            aria-label="Previous page"
+            title="Previous page"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="arrow-icon">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+
+          <div class="pagination-pages">
+            <button
+              v-for="page in displayedPages"
+              :key="page"
+              class="btn--pagination-number"
+              :class="{ 'btn--pagination-active': page === currentPage }"
+              @click="currentPage = page"
+            >
+              {{ page }}
+            </button>
+          </div>
+
+          <button
+            class="btn--pagination-arrow"
+            :disabled="currentPage === totalPages"
+            @click="currentPage++"
+            aria-label="Next page"
+            title="Next page"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="arrow-icon">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+
+          <button
+            class="btn--pagination-arrow"
+            :disabled="currentPage === totalPages"
+            @click="currentPage = totalPages"
+            aria-label="Last page"
+            title="Last page"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="arrow-icon">
+              <polyline points="13 17 18 12 13 7"></polyline>
+              <polyline points="6 17 11 12 6 7"></polyline>
+            </svg>
+          </button>
+        </div>
       </div>
     </article>
   </section>

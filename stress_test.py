@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Configure API Backend URL
 BASE_URL = "http://localhost:8000"
-NUM_REQUESTS = 100  # Number of requests to run
+NUM_REQUESTS = 500  # Number of requests to run
 CONCURRENCY = 10   # Thread pool limit for concurrent execution
 TIMEOUT_SECONDS = 30  # Request timeout threshold in seconds
 

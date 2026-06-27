@@ -140,6 +140,34 @@ def get_news_or_404(db, news_id: int) -> News:
     return news
 
 
+def get_news_metadata(db, news_id: int) -> dict:
+    cache = get_redis_client()
+    if cache:
+        cached_meta = cache.get(f"news:{news_id}:metadata")
+        if cached_meta:
+            import json
+            try:
+                return json.loads(cached_meta)
+            except Exception:
+                pass
+
+    news_row = db.query(News.status, News.organization_id).filter(News.news_id == news_id).first()
+    if not news_row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="News not found")
+
+    metadata = {
+        "status": news_row.status,
+        "organization_id": news_row.organization_id
+    }
+    if cache:
+        import json
+        try:
+            cache.set(f"news:{news_id}:metadata", json.dumps(metadata), ex=300)
+        except Exception:
+            pass
+    return metadata
+
+
 def serialize_news(
     news: News,
     like_count: int,
@@ -416,6 +444,8 @@ async def create_news(payload: NewsCreateRequest, current_user: user_dependency,
     db.add(news)
     db.commit()
     db.refresh(news)
+    cache = get_redis_client()
+    invalidate_news_projections(cache, news.news_id, news.organization_id)
     return serialize_news(get_news_or_404(db, news.news_id))
 
 
@@ -437,6 +467,8 @@ async def update_news(news_id: int, payload: NewsUpdateRequest, current_user: us
 
     db.commit()
     db.refresh(news)
+    cache = get_redis_client()
+    invalidate_news_projections(cache, news_id, news.organization_id)
     return serialize_news(get_news_or_404(db, news_id))
 
 
@@ -448,15 +480,19 @@ async def delete_news(news_id: int, current_user: user_dependency, db: db_depend
     if current_user.get("role") == "Journalist" and news.organization_id != current_user.get("organization_id"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only delete news in your own organization")
 
+    org_id = news.organization_id
     db.delete(news)
     db.commit()
+    cache = get_redis_client()
+    invalidate_news_projections(cache, news_id, org_id)
     return None
 
 
 @router.post("/{news_id}/like", response_model=NewsLikeStateResponse)
 async def like_news(news_id: int, current_user: user_dependency, db: db_dependency):
-    news = get_news_or_404(db, news_id)
-    ensure_published_news(news)
+    news_meta = get_news_metadata(db, news_id)
+    if news_meta["status"].lower() != "published":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only published news can be interacted with")
 
     user_id = current_user.get("id")
     event = create_interaction_event("like", user_id=user_id, news_id=news_id)
@@ -475,15 +511,16 @@ async def like_news(news_id: int, current_user: user_dependency, db: db_dependen
         db.commit()
 
     like_count = get_db_news_like_count(db, news_id)
-    refresh_news_projection_cache(db, cache, news_id, news.organization_id)
-    invalidate_news_projections(cache, news_id, news.organization_id)
+    refresh_news_projection_cache(db, cache, news_id, news_meta["organization_id"])
+    invalidate_news_projections(cache, news_id, news_meta["organization_id"])
     return NewsLikeStateResponse(news_id=news_id, liked=True, like_count=like_count)
 
 
 @router.delete("/{news_id}/like", response_model=NewsLikeStateResponse)
 async def unlike_news(news_id: int, current_user: user_dependency, db: db_dependency):
-    news = get_news_or_404(db, news_id)
-    ensure_published_news(news)
+    news_meta = get_news_metadata(db, news_id)
+    if news_meta["status"].lower() != "published":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only published news can be interacted with")
 
     user_id = current_user.get("id")
     event = create_interaction_event("unlike", user_id=user_id, news_id=news_id)
@@ -502,15 +539,16 @@ async def unlike_news(news_id: int, current_user: user_dependency, db: db_depend
         db.commit()
 
     like_count = get_db_news_like_count(db, news_id)
-    refresh_news_projection_cache(db, cache, news_id, news.organization_id)
-    invalidate_news_projections(cache, news_id, news.organization_id)
+    refresh_news_projection_cache(db, cache, news_id, news_meta["organization_id"])
+    invalidate_news_projections(cache, news_id, news_meta["organization_id"])
     return NewsLikeStateResponse(news_id=news_id, liked=False, like_count=like_count)
 
 
 @router.get("/{news_id}/comments", response_model=list[NewsCommentResponse])
 async def list_news_comments(news_id: int, db: db_dependency):
-    news = get_news_or_404(db, news_id)
-    ensure_published_news(news)
+    news_meta = get_news_metadata(db, news_id)
+    if news_meta["status"].lower() != "published":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only published news can be interacted with")
 
     cache = get_redis_client()
     cached_comments = cache_get_json(cache, redis_key_news_comments(news_id))
@@ -524,8 +562,9 @@ async def list_news_comments(news_id: int, db: db_dependency):
 
 @router.post("/{news_id}/comments", response_model=NewsCommentResponse, status_code=status.HTTP_201_CREATED)
 async def create_news_comment(news_id: int, payload: NewsCommentRequest, current_user: user_dependency, db: db_dependency):
-    news = get_news_or_404(db, news_id)
-    ensure_published_news(news)
+    news_meta = get_news_metadata(db, news_id)
+    if news_meta["status"].lower() != "published":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only published news can be interacted with")
 
     comment_content = payload.content.strip()
     if not comment_content:
@@ -564,5 +603,5 @@ async def create_news_comment(news_id: int, payload: NewsCommentRequest, current
     hydrated_comment = db.query(Comment).options(joinedload(Comment.user)).filter(Comment.comment_id == comment.comment_id).first()
     serialized_comment = serialize_comment(hydrated_comment)
     cache_append_comment(cache, news_id, serialized_comment.model_dump())
-    refresh_news_projection_cache(db, cache, news_id, news.organization_id)
+    refresh_news_projection_cache(db, cache, news_id, news_meta["organization_id"])
     return serialized_comment

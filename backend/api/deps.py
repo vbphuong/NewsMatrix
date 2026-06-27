@@ -34,6 +34,17 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         if username is None or user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
 
+        from api.services.scalability import get_redis_client
+        import json
+        cache = get_redis_client()
+        if cache:
+            cached_user = cache.get(f"user:profile:{user_id}")
+            if cached_user:
+                try:
+                    return json.loads(cached_user)
+                except Exception:
+                    pass
+
         db = SessionLocal()
         try:
             user = db.query(User).filter(User.user_id == user_id).first()
@@ -41,12 +52,18 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
 
             role_name = user.role.role_name if user.role else payload.get("role")
-            return {
+            user_data = {
                 'username': user.email,
                 'id': user.user_id,
                 'role': role_name,
                 'organization_id': user.organization_id,
             }
+            if cache:
+                try:
+                    cache.set(f"user:profile:{user_id}", json.dumps(user_data), ex=120)  # cache for 2 minutes
+                except Exception:
+                    pass
+            return user_data
         finally:
             db.close()
     except JWTError:

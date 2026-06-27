@@ -198,6 +198,7 @@ def invalidate_news_projections(cache, news_id: int, organization_id: Optional[i
         redis_key_news_detail(news_id),
         redis_key_news_comments(news_id),
         redis_key_news_list(),
+        f"news:{news_id}:metadata",
     ]
     if organization_id is not None:
         keys.append(redis_key_organization_detail(organization_id))
