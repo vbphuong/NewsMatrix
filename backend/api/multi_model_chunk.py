@@ -3,7 +3,7 @@ from typing import List
 
 # Unstructured for document parsing
 from unstructured.partition.pdf import partition_pdf
-from unstructured.chunking.title import chunk_by_title
+from unstructured.chunking.title import chunk_by_title 
 import os 
 # LangChain components
 from langchain_core.documents import Document

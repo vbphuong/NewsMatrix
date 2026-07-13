@@ -41,14 +41,30 @@ let externalRefreshInterval = null;
 const newsItems = computed(() => newsResponse.value.items ?? []);
 
 const availableCategories = computed(() => {
-  const set = new Set((newsItems.value || []).map(n => n.category));
+  const set = new Set();
+  (newsItems.value || []).forEach(n => {
+    if (n.category) {
+      set.add(n.category);
+    }
+    if (n.categories && Array.isArray(n.categories)) {
+      n.categories.forEach(cat => {
+        if (cat && cat.name) {
+          set.add(cat.name);
+        }
+      });
+    }
+  });
   return Array.from(set).filter(Boolean);
 });
 
 const filteredNewsItems = computed(() => {
   const q = (searchQuery.value || '').toLowerCase();
   return (newsItems.value || []).filter(n => {
-    if (filterCategory.value && n.category !== filterCategory.value) return false;
+    if (filterCategory.value) {
+      const matchesCategory = n.category === filterCategory.value || 
+                              (n.categories && n.categories.some(cat => cat.name === filterCategory.value));
+      if (!matchesCategory) return false;
+    }
     if (filterDate.value) {
       const nd = n.published_at ? new Date(n.published_at).toISOString().slice(0,10) : '';
       if (nd !== filterDate.value) return false;
@@ -58,6 +74,7 @@ const filteredNewsItems = computed(() => {
       (n.title || '').toLowerCase().includes(q) ||
       (n.content || '').toLowerCase().includes(q) ||
       (n.category || '').toLowerCase().includes(q) ||
+      (n.categories && n.categories.some(cat => (cat.name || '').toLowerCase().includes(q))) ||
       (n.published_at || '').toLowerCase().includes(q)
     );
   });

@@ -243,6 +243,10 @@ class News(Base):
         default=0
     )
 
+    embedding = Column(
+        Vector(1536)
+    )
+
     organization = relationship(
         "Organization",
         back_populates="news"

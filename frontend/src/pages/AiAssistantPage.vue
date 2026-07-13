@@ -207,7 +207,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <form class="assistant-form" @submit.prevent="sendMessage">
+        <form class="assistant-form" @submit.prevent="sendMessage"> 
           <div v-if="imagePreview" class="image-preview">
             <img :src="imagePreview" alt="Selected image preview" />
             <button class="image-preview__remove" type="button" @click="removeImage" title="Remove image">&times;</button>

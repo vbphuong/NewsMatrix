@@ -256,7 +256,8 @@ async def create_organization(payload: OrganizationRequest, current_user: user_d
     db.add(organization)
     db.commit()
     db.refresh(organization)
-    return serialize_organization(get_organization_or_404(db, organization.organization_id))
+    followers_count = fetch_organization_followers_counts(db, [organization]).get(organization.organization_id, 0)
+    return serialize_organization(organization, followers_count)
 
 
 @router.put("/{organization_id}", response_model=OrganizationResponse)
@@ -277,7 +278,8 @@ async def update_organization(
 
     db.commit()
     db.refresh(organization)
-    return serialize_organization(get_organization_or_404(db, organization_id))
+    followers_count = fetch_organization_followers_counts(db, [organization]).get(organization.organization_id, 0)
+    return serialize_organization(organization, followers_count)
 
 
 @router.delete("/{organization_id}", status_code=status.HTTP_204_NO_CONTENT)

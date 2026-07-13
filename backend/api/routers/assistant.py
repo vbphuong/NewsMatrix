@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
-from api.deps import user_dependency
+from api.deps import db_dependency, user_dependency
 from api.generate_answer import answer_query
+from api.services.news_embedding import backfill_news_embeddings
 
 load_dotenv()
 
@@ -131,3 +132,19 @@ async def chat_with_chunks(
         query_variations=result["query_variations"],
         sources=[AssistantSourceResponse(**source) for source in result["sources"]],
     )
+
+
+@router.post("/backfill-news-embeddings")
+async def backfill_news_embeddings_endpoint(
+    current_user: user_dependency,
+    db: db_dependency,
+):
+    """Generate embeddings for all published news articles that don't have one yet. Admin only."""
+    if current_user.get("role") != "Admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can trigger the news embedding backfill.",
+        )
+
+    result = backfill_news_embeddings(db)
+    return result

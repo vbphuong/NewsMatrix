@@ -38,6 +38,23 @@ const canManageNews = computed(() => isJournalist.value || isAdmin.value);
 const newsItems = computed(() => workspaceResponse.value.items ?? []);
 const currentOrganizationId = computed(() => workspaceResponse.value.organization_id ?? null);
 
+const currentPage = ref(1);
+const pageSize = 5;
+
+const totalPages = computed(() => Math.ceil(newsItems.value.length / pageSize));
+
+const paginatedNewsItems = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return newsItems.value.slice(start, start + pageSize);
+});
+
+watch(newsItems, (newItems) => {
+  const maxPage = Math.max(1, Math.ceil(newItems.length / pageSize));
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage;
+  }
+});
+
 function resetForm() {
   form.title = '';
   form.content = '';
@@ -129,6 +146,7 @@ async function submitNews() {
     } else {
       await createNews(payload);
       success.value = 'News created successfully.';
+      currentPage.value = 1;
     }
 
     cancelEdit();
@@ -273,36 +291,48 @@ onMounted(async () => {
         <p v-if="error" class="panel__notice notice--error">{{ error }}</p>
         <p v-if="success" class="panel__notice notice--success">{{ success }}</p>
 
-        <div v-if="workspaceResponse.has_organization || isAdmin" class="workspace-news-list">
-          <article v-for="news in newsItems" :key="news.news_id" class="workspace-news-card">
-            <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
-              <div>
-                <h3 class="panel__title">{{ news.title }}</h3>
-                <p class="panel__meta">{{ news.organization_name }} · {{ news.status }}</p>
+        <template v-if="workspaceResponse.has_organization || isAdmin">
+          <div class="workspace-news-list">
+            <article v-for="news in paginatedNewsItems" :key="news.news_id" class="workspace-news-card">
+              <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+                <div>
+                  <h3 class="panel__title">{{ news.title }}</h3>
+                  <p class="panel__meta">{{ news.organization_name }} · {{ news.status }}</p>
+                </div>
+                <span class="badge">#{{ news.news_id }}</span>
               </div>
-              <span class="badge">#{{ news.news_id }}</span>
-            </div>
 
-            <p class="panel__meta" style="color: var(--text-2); line-height: 1.6;">{{ news.content }}</p>
+              <p class="panel__meta" style="color: var(--text-2); line-height: 1.6;">{{ news.content }}</p>
 
-            <div class="workspace-authors">
-              <span v-for="author in news.authors" :key="author.user_id" class="workspace-author-chip">
-                {{ author.email }}
-              </span>
-            </div>
+              <div class="workspace-authors">
+                <span v-for="author in news.authors" :key="author.user_id" class="workspace-author-chip">
+                  {{ author.email }}
+                </span>
+              </div>
 
-            <div v-if="news.categories?.length" class="workspace-categories">
-              <span v-for="category in news.categories" :key="category.category_id" class="workspace-category-chip">
-                {{ category.name }}
-              </span>
-            </div>
+              <div v-if="news.categories?.length" class="workspace-categories">
+                <span v-for="category in news.categories" :key="category.category_id" class="workspace-category-chip">
+                  {{ category.name }}
+                </span>
+              </div>
 
-            <div v-if="canManageNews" class="workspace-form-actions">
-              <button class="btn" type="button" @click="startEdit(news)">Edit</button>
-              <button class="btn btn--danger" type="button" @click="handleDelete(news.news_id)">Delete</button>
-            </div>
-          </article>
-        </div>
+              <div v-if="canManageNews" class="workspace-form-actions">
+                <button class="btn" type="button" @click="startEdit(news)">Edit</button>
+                <button class="btn btn--danger" type="button" @click="handleDelete(news.news_id)">Delete</button>
+              </div>
+            </article>
+          </div>
+
+          <div v-if="totalPages > 1" class="workspace-pagination">
+            <button class="btn" :disabled="currentPage <= 1" @click.prevent="currentPage = Math.max(1, currentPage - 1)">
+              Prev
+            </button>
+            <span class="workspace-pagination-info">Page {{ currentPage }} / {{ totalPages }}</span>
+            <button class="btn" :disabled="currentPage >= totalPages" @click.prevent="currentPage = Math.min(totalPages, currentPage + 1)">
+              Next
+            </button>
+          </div>
+        </template>
 
         <div v-else class="workspace-status">
           {{ workspaceResponse.message || 'You need to login to access this site.' }}

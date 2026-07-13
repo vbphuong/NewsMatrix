@@ -102,3 +102,19 @@
   font-weight: 700;
   padding: 0.3rem 0.55rem;
 }
+
+.workspace-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.workspace-pagination-info {
+  font-size: 0.9rem;
+  color: var(--text-2);
+  font-weight: 600;
+}

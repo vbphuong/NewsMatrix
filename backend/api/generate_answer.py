@@ -13,7 +13,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from pydantic import BaseModel
 
 from api.database import SessionLocal
-from api.models import Chunk, Document as DocumentRecord
+from api.models import Chunk, Document as DocumentRecord, News, Organization
 
 load_dotenv()
 
@@ -137,6 +137,58 @@ def load_chunks_from_database() -> list[IndexedChunk]:
                 )
             )
 
+        return indexed_chunks
+    finally:
+        db.close()
+
+
+def load_news_as_indexed_chunks() -> list[IndexedChunk]:
+    """Load all published news articles with embeddings as IndexedChunks for RAG search."""
+    from sqlalchemy import func as sa_func
+    from sqlalchemy.orm import joinedload
+
+    db = SessionLocal()
+    try:
+        news_rows = (
+            db.query(News, Organization.name)
+            .join(Organization, News.organization_id == Organization.organization_id)
+            .options(joinedload(News.categories), joinedload(News.authors))
+            .filter(sa_func.lower(News.status) == "published", News.embedding.isnot(None))
+            .order_by(News.published_at.desc())
+            .all()
+        )
+
+        indexed_chunks: list[IndexedChunk] = []
+        for news, org_name in news_rows:
+            category_names = ", ".join(cat.name for cat in news.categories) if news.categories else "Uncategorized"
+            author_emails = ", ".join(author.email for author in news.authors) if news.authors else "Unknown"
+
+            page_content = (
+                f"[News Article] Title: {news.title}\n"
+                f"Organization: {org_name}\n"
+                f"Categories: {category_names}\n"
+                f"Authors: {author_emails}\n\n"
+                f"{news.content}"
+            )
+
+            page_metadata = {
+                "_chunk_id": f"news-{news.news_id}",
+                "source_file": f"News: {news.title}",
+                "source_type": "news",
+                "news_id": news.news_id,
+                "organization": org_name,
+                "categories": category_names,
+                "authors": author_emails,
+            }
+
+            indexed_chunks.append(
+                IndexedChunk(
+                    document=Document(page_content=page_content, metadata=page_metadata),
+                    embedding=list(news.embedding),
+                )
+            )
+
+        print(f"📰 Loaded {len(indexed_chunks)} published news articles for RAG.")
         return indexed_chunks
     finally:
         db.close()
@@ -435,6 +487,9 @@ CONTENT TO ANALYZE:
                     prompt_text += "TABLES:\n"
                     for table_index, table in enumerate(tables_html, start=1):
                         prompt_text += f"Table {table_index}:\n{table}\n\n"
+            elif chunk.page_content:
+                # Fallback for non-PDF sources (e.g. news articles)
+                prompt_text += f"TEXT:\n{chunk.page_content}\n\n"
             
             prompt_text += "\n"
         
@@ -466,6 +521,8 @@ def answer_query(
     image_content_type: str = "image/jpeg",
 ) -> dict:
     indexed_chunks = load_chunks_from_database()
+    news_chunks = load_news_as_indexed_chunks()
+    indexed_chunks.extend(news_chunks)
     retriever = HybridMultiQueryRetriever(indexed_chunks)
     fused_results, query_variations = retriever.search_multi_query(
         query=query,

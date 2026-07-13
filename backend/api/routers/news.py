@@ -8,6 +8,7 @@ from sqlalchemy.orm import joinedload
 
 from api.deps import db_dependency, user_dependency
 from api.models import Category, Comment, Follow, Like, News, Organization, User
+from api.services.news_embedding import update_news_embedding
 from api.services.scalability import (
     cache_append_comment,
     cache_get_int,
@@ -446,7 +447,21 @@ async def create_news(payload: NewsCreateRequest, current_user: user_dependency,
     db.refresh(news)
     cache = get_redis_client()
     invalidate_news_projections(cache, news.news_id, news.organization_id)
-    return serialize_news(get_news_or_404(db, news.news_id))
+
+    # Generate embedding for RAG when news is published
+    if normalized_status.lower() == "published":
+        try:
+            update_news_embedding(db, news.news_id)
+        except Exception as e:
+            print(f"⚠️ Failed to generate embedding for news #{news.news_id}: {e}")
+
+    like_count_dict, comment_count_dict, org_followers_dict = fetch_news_metrics(db, [news])
+    return serialize_news(
+        news,
+        like_count_dict.get(news.news_id, 0),
+        comment_count_dict.get(news.news_id, 0),
+        org_followers_dict.get(news.organization_id, 0) if news.organization_id else 0,
+    )
 
 
 @router.put("/{news_id}", response_model=NewsResponse)
@@ -469,7 +484,21 @@ async def update_news(news_id: int, payload: NewsUpdateRequest, current_user: us
     db.refresh(news)
     cache = get_redis_client()
     invalidate_news_projections(cache, news_id, news.organization_id)
-    return serialize_news(get_news_or_404(db, news_id))
+
+    # Generate/update embedding for RAG when news is published
+    if normalized_status.lower() == "published":
+        try:
+            update_news_embedding(db, news_id)
+        except Exception as e:
+            print(f"⚠️ Failed to generate embedding for news #{news_id}: {e}")
+
+    like_count_dict, comment_count_dict, org_followers_dict = fetch_news_metrics(db, [news])
+    return serialize_news(
+        news,
+        like_count_dict.get(news.news_id, 0),
+        comment_count_dict.get(news.news_id, 0),
+        org_followers_dict.get(news.organization_id, 0) if news.organization_id else 0,
+    )
 
 
 @router.delete("/{news_id}", status_code=status.HTTP_204_NO_CONTENT)
