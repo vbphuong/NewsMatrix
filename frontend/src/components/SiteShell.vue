@@ -134,5 +134,35 @@ function handleLogout() {
     <main class="page--wide">
       <slot />
     </main>
+    
+    <footer class="app-shell__footer">
+      <div class="app-shell__footer-inner">
+        <div class="footer-col">
+          <h4>NewsMatrix</h4>
+          <p class="muted">Concise summaries, trusted sources, and fast discovery.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <ul>
+            <li><RouterLink to="/news">News</RouterLink></li>
+            <li><RouterLink to="/organization">Organizations</RouterLink></li>
+            <li><RouterLink to="/about">About</RouterLink></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul>
+            <li><RouterLink to="/contact">Contact</RouterLink></li>
+            <li><RouterLink to="/faq">FAQ</RouterLink></li>
+          </ul>
+        </div>
+
+        <div class="footer-col footer-right">
+          <small>© {{ new Date().getFullYear() }} NewsMatrix</small>
+        </div>
+      </div>
+    </footer>
   </div>
 </template>

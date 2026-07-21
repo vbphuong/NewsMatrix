@@ -32,7 +32,7 @@ const filterDate = ref('');
 const currentPage = ref(1);
 const pageSize = ref(5);
 // Data source selection: 'system' (database), 'mock' (local JSON), 'external' (external API)
-const dataSource = ref('mock');
+const dataSource = ref('system');
 const externalApiUrl = ref(
   'https://gnews.io/api/v4/top-headlines?lang=en&max=15&token=a8e30c0316454ad2ea9051b7024997c7'
 );
